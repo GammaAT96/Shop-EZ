@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Eye, EyeOff, Lock, Mail, ArrowRight } from 'lucide-react';
 import axios from 'axios';
+import { useAuth } from '../context/AuthContext';
 
 export default function Login() {
     const [email, setEmail] = useState('');
@@ -11,6 +12,7 @@ export default function Login() {
     const [loading, setLoading] = useState(false);
 
     const navigate = useNavigate();
+    const { login: loginContext } = useAuth();
 
     const handleLogin = async (e) => {
         e.preventDefault();
@@ -18,15 +20,11 @@ export default function Login() {
         setLoading(true);
 
         try {
-            const response = await axios.post('/api/auth/login', { email, password }, {
-                // Assuming proxy is set up in vite, otherwise need absolute URL
-                baseURL: 'http://localhost:5000'
-            });
-            // Save token and user data to local storage
-            localStorage.setItem('userInfo', JSON.stringify(response.data));
+            const response = await axios.post('/api/auth/login', { email, password });
+            loginContext(response.data);
 
             // Redirect based on role
-            if (response.data.role === 'ADMIN') {
+            if (response.data.role === 'admin') {
                 navigate('/admin/dashboard');
             } else {
                 navigate('/');

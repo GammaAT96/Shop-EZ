@@ -3,6 +3,8 @@ import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { ShoppingBag, ChevronLeft, ShieldCheck, Truck, ArrowLeft } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
+import { useCart } from '../context/CartContext';
 
 export default function ProductDetails() {
     const { id } = useParams();
@@ -10,11 +12,13 @@ export default function ProductDetails() {
     const [product, setProduct] = useState(null);
     const [loading, setLoading] = useState(true);
     const [quantity, setQuantity] = useState(1);
+    const { userInfo } = useAuth();
+    const { fetchCart } = useCart();
 
     useEffect(() => {
         const fetchProduct = async () => {
             try {
-                const { data } = await axios.get(`http://localhost:5000/api/products/${id}`);
+                const { data } = await axios.get(`/api/products/${id}`);
                 setProduct(data);
             } catch (error) {
                 console.error("Error fetching product", error);
@@ -26,21 +30,20 @@ export default function ProductDetails() {
     }, [id]);
 
     const addToCartHandler = async () => {
-        const userInfo = localStorage.getItem('userInfo');
         if (!userInfo) {
             navigate('/login');
             return;
         }
 
         try {
-            const parsedUser = JSON.parse(userInfo);
-            const config = { headers: { Authorization: `Bearer ${parsedUser.token}` } };
+            const config = { headers: { Authorization: `Bearer ${userInfo.token}` } };
 
-            await axios.post('http://localhost:5000/api/cart', {
+            await axios.post('/api/cart', {
                 productId: product._id,
                 quantity: quantity
             }, config);
 
+            await fetchCart();
             navigate('/cart');
         } catch (error) {
             console.error("Failed adding to cart", error);

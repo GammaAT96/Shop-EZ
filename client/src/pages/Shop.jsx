@@ -15,7 +15,7 @@ export default function Shop() {
         try {
             const queryStrings = searchParams.toString();
             // Assuming proxy or running on same port for API
-            const { data } = await axios.get(`http://localhost:5000/api/products?${queryStrings}`);
+            const { data } = await axios.get(`/api/products?${queryStrings}`);
             setProducts(data);
         } catch (error) {
             console.error("Error fetching products", error);
@@ -26,7 +26,7 @@ export default function Shop() {
 
     const fetchCategories = async () => {
         try {
-            const { data } = await axios.get(`http://localhost:5000/api/categories`);
+            const { data } = await axios.get(`/api/categories`);
             setCategories(data);
         } catch (error) {
             console.error("Error fetching categories", error);

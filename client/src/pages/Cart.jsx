@@ -2,40 +2,19 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { Link, useNavigate } from 'react-router-dom';
 import { Trash2, ArrowRight } from 'lucide-react';
+import { useCart } from '../context/CartContext';
+import { useAuth } from '../context/AuthContext';
 
 export default function Cart() {
-    const [cart, setCart] = useState(null);
-    const [loading, setLoading] = useState(true);
+    const { cart, fetchCart } = useCart();
+    const { userInfo } = useAuth();
     const navigate = useNavigate();
 
-    const fetchCart = async () => {
-        const userInfo = localStorage.getItem('userInfo');
-        if (!userInfo) {
-            navigate('/login');
-            return;
-        }
-
-        try {
-            const parsedUser = JSON.parse(userInfo);
-            const config = { headers: { Authorization: `Bearer ${parsedUser.token}` } };
-            const { data } = await axios.get('http://localhost:5000/api/cart', config);
-            setCart(data);
-        } catch (error) {
-            console.error("Cart fetch error", error);
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    useEffect(() => {
-        fetchCart();
-    }, []);
-
     const removeFromCart = async (productId) => {
-        const parsedUser = JSON.parse(localStorage.getItem('userInfo'));
-        const config = { headers: { Authorization: `Bearer ${parsedUser.token}` } };
+        if (!userInfo) return;
+        const config = { headers: { Authorization: `Bearer ${userInfo.token}` } };
         try {
-            await axios.delete(`http://localhost:5000/api/cart/${productId}`, config);
+            await axios.delete(`/api/cart/${productId}`, config);
             fetchCart();
         } catch (error) {
             console.error("Remove failed", error);
@@ -43,17 +22,17 @@ export default function Cart() {
     };
 
     const updateQuantity = async (productId, quantity) => {
-        const parsedUser = JSON.parse(localStorage.getItem('userInfo'));
-        const config = { headers: { Authorization: `Bearer ${parsedUser.token}` } };
+        if (!userInfo) return;
+        const config = { headers: { Authorization: `Bearer ${userInfo.token}` } };
         try {
-            await axios.put(`http://localhost:5000/api/cart`, { productId, quantity }, config);
+            await axios.put(`/api/cart`, { productId, quantity }, config);
             fetchCart();
         } catch (error) {
             console.error("Update failed", error);
         }
     };
 
-    if (loading) return <div className="text-center py-20 min-h-screen text-slate-500 font-bold">Loading Cart...</div>;
+    if (cart === null && userInfo) return <div className="text-center py-20 min-h-screen text-slate-500 font-bold">Loading Cart...</div>;
 
     const subtotal = cart?.products?.reduce((acc, item) => acc + (item.productId?.price * item.quantity), 0) || 0;
 
@@ -136,8 +115,8 @@ export default function Cart() {
                                     </span>
                                 </div>
 
-                                {/* Placeholder for Checkout Routing */}
-                                <button className="w-full py-4 bg-slate-900 text-white font-bold rounded-xl shadow-xl shadow-slate-900/20 hover:bg-blue-600 hover:shadow-blue-600/30 transition-all flex justify-center items-center gap-2 transform hover:-translate-y-0.5">
+                                {/* Checkout Routing */}
+                                <button onClick={() => navigate('/checkout')} className="w-full py-4 bg-slate-900 text-white font-bold rounded-xl shadow-xl shadow-slate-900/20 hover:bg-blue-600 hover:shadow-blue-600/30 transition-all flex justify-center items-center gap-2 transform hover:-translate-y-0.5">
                                     Checkout Now <ArrowRight className="w-5 h-5" />
                                 </button>
                             </div>

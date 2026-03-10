@@ -27,7 +27,7 @@ const sendOrderEmail = async (email, order) => {
 // Create new order
 const addOrderItems = async (req, res) => {
     try {
-        const { orderItems, totalAmount } = req.body;
+        const { orderItems, totalAmount, shippingDetails, paymentMethod } = req.body;
 
         if (orderItems && orderItems.length === 0) {
             return res.status(400).json({ message: 'No order items' });
@@ -56,8 +56,11 @@ const addOrderItems = async (req, res) => {
                 products: orderItems.map((item) => ({
                     productId: item.productId,
                     quantity: item.quantity,
-                    price: item.price
+                    price: item.price,
+                    size: item.size
                 })),
+                shippingDetails,
+                paymentMethod,
                 totalAmount
             });
 

@@ -2,13 +2,15 @@ import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { ShoppingBag, Search, Menu, X, User } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useAuth } from '../context/AuthContext';
+import { useCart } from '../context/CartContext';
 
 export default function Navbar() {
     const [scrolled, setScrolled] = useState(false);
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
     const navigate = useNavigate();
-
-    const userInfo = JSON.parse(localStorage.getItem('userInfo'));
+    const { userInfo, logout } = useAuth();
+    const { cart } = useCart();
 
     useEffect(() => {
         const handleScroll = () => {
@@ -24,7 +26,7 @@ export default function Navbar() {
     }, []);
 
     const logoutHandler = () => {
-        localStorage.removeItem('userInfo');
+        logout();
         navigate('/login');
     };
 
@@ -60,7 +62,7 @@ export default function Navbar() {
                         <Link to="/cart" className="relative text-slate-500 hover:text-blue-600 transition-colors">
                             <ShoppingBag className="w-5 h-5" />
                             <span className="absolute -top-2 -right-2 bg-pink-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full">
-                                0
+                                {cart?.products?.length || 0}
                             </span>
                         </Link>
 
@@ -71,11 +73,11 @@ export default function Navbar() {
                                 </div>
                                 <div className="absolute right-0 top-full mt-2 w-48 bg-white rounded-xl shadow-xl shadow-slate-200/50 border border-slate-100 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 transform translate-y-2 group-hover:translate-y-0">
                                     <div className="p-4 border-b border-slate-100">
-                                        <p className="text-sm font-semibold text-slate-800 truncate">{userInfo.name}</p>
+                                        <p className="text-sm font-semibold text-slate-800 truncate">{userInfo.username}</p>
                                         <p className="text-xs text-slate-500 truncate">{userInfo.email}</p>
                                     </div>
                                     <div className="p-2">
-                                        {userInfo.role === 'ADMIN' && (
+                                        {userInfo.role === 'admin' && (
                                             <Link to="/admin/dashboard" className="block px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 hover:text-blue-600 rounded-lg transition-colors">
                                                 Dashboard
                                             </Link>
@@ -132,9 +134,9 @@ export default function Navbar() {
                                 {userInfo ? (
                                     <>
                                         <div className="px-4 py-2 mb-2">
-                                            <p className="text-sm font-semibold text-slate-800">{userInfo.name}</p>
+                                            <p className="text-sm font-semibold text-slate-800">{userInfo.username}</p>
                                         </div>
-                                        {userInfo.role === 'ADMIN' && (
+                                        {userInfo.role === 'admin' && (
                                             <Link to="/admin/dashboard" onClick={() => setMobileMenuOpen(false)} className="block px-4 py-3 text-base font-medium text-slate-800 hover:bg-slate-50 rounded-xl">Dashboard</Link>
                                         )}
                                         <button onClick={() => { logoutHandler(); setMobileMenuOpen(false); }} className="w-full text-left px-4 py-3 text-base font-medium text-red-600 hover:bg-red-50 rounded-xl">

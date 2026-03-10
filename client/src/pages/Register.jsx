@@ -2,18 +2,20 @@ import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Eye, EyeOff, Lock, Mail, User, ArrowRight } from 'lucide-react';
 import axios from 'axios';
+import { useAuth } from '../context/AuthContext';
 
 export default function Register() {
-    const [name, setName] = useState('');
+    const [username, setUsername] = useState('');
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
     const [showPassword, setShowPassword] = useState(false);
-    const [accountType, setAccountType] = useState('USER'); // USER or ADMIN
+    const [accountType, setAccountType] = useState('user'); // user or admin
     const [error, setError] = useState('');
     const [loading, setLoading] = useState(false);
 
     const navigate = useNavigate();
+    const { login: loginContext } = useAuth();
 
     const handleRegister = async (e) => {
         e.preventDefault();
@@ -27,18 +29,15 @@ export default function Register() {
 
         try {
             const response = await axios.post('/api/auth/register', {
-                name,
+                username,
                 email,
                 password,
                 role: accountType
-            }, {
-                baseURL: 'http://localhost:5000'
             });
 
-            // Auto login or redirect
-            localStorage.setItem('userInfo', JSON.stringify(response.data));
+            loginContext(response.data);
 
-            if (response.data.role === 'ADMIN') {
+            if (response.data.role === 'admin') {
                 navigate('/admin/dashboard');
             } else {
                 navigate('/');
@@ -78,14 +77,14 @@ export default function Register() {
                         {/* Account Type Selection */}
                         <div className="flex gap-4 mb-4">
                             <div
-                                onClick={() => setAccountType('USER')}
-                                className={`flex-1 p-3 text-center rounded-lg border cursor-pointer border-gray-200 transition-all ${accountType === 'USER' ? 'ring-2 ring-blue-500 bg-blue-50 border-blue-200 font-semibold text-blue-700' : 'hover:bg-gray-50 text-gray-600'}`}
+                                onClick={() => setAccountType('user')}
+                                className={`flex-1 p-3 text-center rounded-lg border cursor-pointer border-gray-200 transition-all ${accountType === 'user' ? 'ring-2 ring-blue-500 bg-blue-50 border-blue-200 font-semibold text-blue-700' : 'hover:bg-gray-50 text-gray-600'}`}
                             >
                                 Shopper
                             </div>
                             <div
-                                onClick={() => setAccountType('ADMIN')}
-                                className={`flex-1 p-3 text-center rounded-lg border cursor-pointer border-gray-200 transition-all ${accountType === 'ADMIN' ? 'ring-2 ring-blue-500 bg-blue-50 border-blue-200 font-semibold text-blue-700' : 'hover:bg-gray-50 text-gray-600'}`}
+                                onClick={() => setAccountType('admin')}
+                                className={`flex-1 p-3 text-center rounded-lg border cursor-pointer border-gray-200 transition-all ${accountType === 'admin' ? 'ring-2 ring-blue-500 bg-blue-50 border-blue-200 font-semibold text-blue-700' : 'hover:bg-gray-50 text-gray-600'}`}
                             >
                                 Seller/Admin
                             </div>
@@ -102,8 +101,8 @@ export default function Register() {
                                     required
                                     className="focus:ring-blue-500 focus:border-blue-500 block w-full pl-10 sm:text-sm border-gray-300 rounded-lg p-3 border outline-none transition-colors"
                                     placeholder="John Doe"
-                                    value={name}
-                                    onChange={(e) => setName(e.target.value)}
+                                    value={username}
+                                    onChange={(e) => setUsername(e.target.value)}
                                 />
                             </div>
                         </div>

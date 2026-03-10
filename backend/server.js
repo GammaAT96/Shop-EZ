@@ -28,6 +28,7 @@ app.use('/api/orders', require('./routes/orderRoutes'));
 app.use('/api/categories', require('./routes/categoryRoutes'));
 app.use('/api/payment', require('./routes/paymentRoutes'));
 app.use('/api/analytics', require('./routes/analyticsRoutes'));
+app.use('/api/settings', require('./routes/settingsRoutes'));
 
 // Basic route for testing
 app.get('/', (req, res) => {
