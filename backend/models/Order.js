@@ -18,9 +18,10 @@ const orderSchema = new mongoose.Schema({
     },
     paymentMethod: { type: String, default: 'card' },
     totalAmount: { type: Number, required: true },
+    paymentStatus: { type: String, default: 'Pending' },
     orderStatus: {
         type: String,
-        enum: ['order placed', 'in-transit', 'delivered', 'cancelled'],
+        enum: ['order placed', 'in-transit', 'Shipped', 'delivered', 'cancelled'],
         default: 'order placed'
     }
 }, { timestamps: true });

@@ -15,9 +15,9 @@ import Profile from './pages/Profile';
 function App() {
     return (
         <BrowserRouter>
-            <div className="App min-h-screen bg-slate-50 flex flex-col font-sans text-slate-800 transition-colors duration-300">
+            <div className="App min-h-screen bg-background flex flex-col font-sans text-foreground transition-colors duration-300">
                 <Navbar />
-                <main className="flex-grow pt-20">
+                <main className="flex-grow pt-0">
                     <Routes>
                         <Route path="/" element={<Home />} />
                         <Route path="/shop" element={<Shop />} />

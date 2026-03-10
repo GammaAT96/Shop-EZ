@@ -4,9 +4,6 @@ const processPayment = async (req, res) => {
     try {
         const { amount } = req.body;
 
-        if (!process.env.STRIPE_SECRET_KEY) {
-            return res.status(500).json({ message: 'Stripe secret key is not configured.' });
-        }
 
         const paymentIntent = await stripe.paymentIntents.create({
             amount: Math.round(amount * 100), // Stripe expects amounts in cents

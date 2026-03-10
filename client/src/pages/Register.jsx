@@ -3,6 +3,9 @@ import { Link, useNavigate } from 'react-router-dom';
 import { Eye, EyeOff, Lock, Mail, User, ArrowRight } from 'lucide-react';
 import axios from 'axios';
 import { useAuth } from '../context/AuthContext';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 
 export default function Register() {
     const [username, setUsername] = useState('');
@@ -50,136 +53,142 @@ export default function Register() {
     };
 
     return (
-        <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4 sm:px-6 lg:px-8 pt-10 pb-10">
-            <div className="max-w-md w-full space-y-8 bg-white p-8 rounded-2xl shadow-xl relative overflow-hidden">
-                <div className="absolute top-0 right-0 w-32 h-32 bg-blue-100 rounded-full blur-3xl -mr-16 -mt-16 opacity-50 z-0"></div>
+        <div className="min-h-screen flex items-center justify-center bg-background px-4 sm:px-6 lg:px-8 py-10">
+            <Card className="max-w-md w-full shadow-md border-border relative overflow-hidden">
+                <div className="absolute top-0 right-0 w-32 h-32 bg-primary/10 rounded-full blur-3xl -mr-16 -mt-16 z-0 pointer-events-none"></div>
 
-                <div className="relative z-10">
-                    <h2 className="mt-2 text-center text-3xl font-extrabold text-gray-900 tracking-tight">
-                        Create an account
-                    </h2>
-                    <p className="mt-2 text-center text-sm text-gray-600">
+                <CardHeader className="text-center pt-8 pb-4 relative z-10">
+                    <CardTitle className="text-3xl font-extrabold tracking-tight pb-2">Create an account</CardTitle>
+                    <CardDescription className="text-sm">
                         Already have an account?{' '}
-                        <Link to="/login" className="font-medium text-blue-600 hover:text-blue-500 transition-colors">
+                        <Link to="/login" className="font-medium text-primary hover:underline transition-colors">
                             Sign in here
                         </Link>
-                    </p>
-                </div>
+                    </CardDescription>
+                </CardHeader>
 
-                <form className="mt-8 space-y-6 relative z-10" onSubmit={handleRegister}>
-                    {error && (
-                        <div className="rounded-md bg-red-50 p-4 border border-red-100">
-                            <h3 className="text-sm font-medium text-red-800">{error}</h3>
-                        </div>
-                    )}
-
-                    <div className="space-y-4">
-                        {/* Account Type Selection */}
-                        <div className="flex gap-4 mb-4">
-                            <div
-                                onClick={() => setAccountType('user')}
-                                className={`flex-1 p-3 text-center rounded-lg border cursor-pointer border-gray-200 transition-all ${accountType === 'user' ? 'ring-2 ring-blue-500 bg-blue-50 border-blue-200 font-semibold text-blue-700' : 'hover:bg-gray-50 text-gray-600'}`}
-                            >
-                                Shopper
+                <CardContent className="pb-8 relative z-10">
+                    <form className="space-y-6" onSubmit={handleRegister}>
+                        {error && (
+                            <div className="rounded-md bg-destructive/15 p-4 border border-destructive/20 text-destructive text-sm font-medium">
+                                {error}
                             </div>
-                            <div
-                                onClick={() => setAccountType('admin')}
-                                className={`flex-1 p-3 text-center rounded-lg border cursor-pointer border-gray-200 transition-all ${accountType === 'admin' ? 'ring-2 ring-blue-500 bg-blue-50 border-blue-200 font-semibold text-blue-700' : 'hover:bg-gray-50 text-gray-600'}`}
-                            >
-                                Seller/Admin
-                            </div>
-                        </div>
+                        )}
 
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700">Full Name</label>
-                            <div className="mt-1 relative rounded-md shadow-sm">
-                                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                    <User className="h-5 w-5 text-gray-400" />
-                                </div>
-                                <input
-                                    type="text"
-                                    required
-                                    className="focus:ring-blue-500 focus:border-blue-500 block w-full pl-10 sm:text-sm border-gray-300 rounded-lg p-3 border outline-none transition-colors"
-                                    placeholder="John Doe"
-                                    value={username}
-                                    onChange={(e) => setUsername(e.target.value)}
-                                />
+                        <div className="space-y-4">
+                            <div className="flex gap-4 mb-6">
+                                <Button
+                                    type="button"
+                                    variant={accountType === 'user' ? 'default' : 'outline'}
+                                    className="flex-1"
+                                    onClick={() => setAccountType('user')}
+                                >
+                                    Shopper
+                                </Button>
+                                <Button
+                                    type="button"
+                                    variant={accountType === 'admin' ? 'default' : 'outline'}
+                                    className="flex-1"
+                                    onClick={() => setAccountType('admin')}
+                                >
+                                    Seller/Admin
+                                </Button>
                             </div>
-                        </div>
 
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700">Email address</label>
-                            <div className="mt-1 relative rounded-md shadow-sm">
-                                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                    <Mail className="h-5 w-5 text-gray-400" />
-                                </div>
-                                <input
-                                    type="email"
-                                    required
-                                    className="focus:ring-blue-500 focus:border-blue-500 block w-full pl-10 sm:text-sm border-gray-300 rounded-lg p-3 border outline-none transition-colors"
-                                    placeholder="you@example.com"
-                                    value={email}
-                                    onChange={(e) => setEmail(e.target.value)}
-                                />
-                            </div>
-                        </div>
-
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700">Password</label>
-                            <div className="mt-1 relative rounded-md shadow-sm">
-                                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                    <Lock className="h-5 w-5 text-gray-400" />
-                                </div>
-                                <input
-                                    type={showPassword ? 'text' : 'password'}
-                                    required
-                                    className="focus:ring-blue-500 focus:border-blue-500 block w-full pl-10 pr-10 sm:text-sm border-gray-300 rounded-lg p-3 border outline-none transition-colors"
-                                    placeholder="••••••••"
-                                    value={password}
-                                    onChange={(e) => setPassword(e.target.value)}
-                                    minLength={6}
-                                />
-                                <div className="absolute inset-y-0 right-0 pr-3 flex items-center">
-                                    <button
-                                        type="button"
-                                        onClick={() => setShowPassword(!showPassword)}
-                                        className="text-gray-400 hover:text-gray-500 focus:outline-none"
-                                    >
-                                        {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
-                                    </button>
+                            <div>
+                                <label className="block text-sm font-medium mb-2">Full Name</label>
+                                <div className="relative">
+                                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                        <User className="h-5 w-5 text-muted-foreground" />
+                                    </div>
+                                    <Input
+                                        type="text"
+                                        required
+                                        className="pl-10"
+                                        placeholder="John Doe"
+                                        value={username}
+                                        onChange={(e) => setUsername(e.target.value)}
+                                    />
                                 </div>
                             </div>
-                        </div>
 
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700">Confirm Password</label>
-                            <div className="mt-1 relative rounded-md shadow-sm">
-                                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                    <Lock className="h-5 w-5 text-gray-400" />
+                            <div>
+                                <label className="block text-sm font-medium mb-2">Email address</label>
+                                <div className="relative">
+                                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                        <Mail className="h-5 w-5 text-muted-foreground" />
+                                    </div>
+                                    <Input
+                                        type="email"
+                                        required
+                                        className="pl-10"
+                                        placeholder="you@example.com"
+                                        value={email}
+                                        onChange={(e) => setEmail(e.target.value)}
+                                    />
                                 </div>
-                                <input
-                                    type={showPassword ? 'text' : 'password'}
-                                    required
-                                    className="focus:ring-blue-500 focus:border-blue-500 block w-full pl-10 sm:text-sm border-gray-300 rounded-lg p-3 border outline-none transition-colors"
-                                    placeholder="••••••••"
-                                    value={confirmPassword}
-                                    onChange={(e) => setConfirmPassword(e.target.value)}
-                                    minLength={6}
-                                />
+                            </div>
+
+                            <div>
+                                <label className="block text-sm font-medium mb-2">Password</label>
+                                <div className="relative">
+                                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                        <Lock className="h-5 w-5 text-muted-foreground" />
+                                    </div>
+                                    <Input
+                                        type={showPassword ? 'text' : 'password'}
+                                        required
+                                        className="pl-10 pr-10"
+                                        placeholder="••••••••"
+                                        value={password}
+                                        onChange={(e) => setPassword(e.target.value)}
+                                        minLength={6}
+                                    />
+                                    <div className="absolute inset-y-0 right-0 pr-2 flex items-center">
+                                        <Button
+                                            type="button"
+                                            variant="ghost"
+                                            size="icon"
+                                            onClick={() => setShowPassword(!showPassword)}
+                                            className="text-muted-foreground hover:text-foreground h-8 w-8"
+                                        >
+                                            {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                                        </Button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div>
+                                <label className="block text-sm font-medium mb-2">Confirm Password</label>
+                                <div className="relative">
+                                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                        <Lock className="h-5 w-5 text-muted-foreground" />
+                                    </div>
+                                    <Input
+                                        type={showPassword ? 'text' : 'password'}
+                                        required
+                                        className="pl-10"
+                                        placeholder="••••••••"
+                                        value={confirmPassword}
+                                        onChange={(e) => setConfirmPassword(e.target.value)}
+                                        minLength={6}
+                                    />
+                                </div>
                             </div>
                         </div>
-                    </div>
 
-                    <button
-                        type="submit"
-                        disabled={loading}
-                        className="group relative w-full flex justify-center py-3 px-4 border border-transparent text-sm font-medium rounded-lg text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors disabled:opacity-70 disabled:cursor-not-allowed shadow-md hover:shadow-lg"
-                    >
-                        {loading ? 'Creating account...' : 'Create account'}
-                        {!loading && <ArrowRight className="ml-2 h-5 w-5 group-hover:translate-x-1 transition-transform" />}
-                    </button>
-                </form>
-            </div>
+                        <Button
+                            type="submit"
+                            disabled={loading}
+                            className="w-full text-md mt-6"
+                            size="lg"
+                        >
+                            {loading ? 'Creating account...' : 'Create account'}
+                            {!loading && <ArrowRight className="ml-2 h-4 w-4" />}
+                        </Button>
+                    </form>
+                </CardContent>
+            </Card>
         </div>
     );
 }

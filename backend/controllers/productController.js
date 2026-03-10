@@ -24,7 +24,7 @@ const getProducts = async (req, res) => {
             if (req.query.maxPrice) filter.price.$lte = Number(req.query.maxPrice);
         }
 
-        const products = await Product.find(filter).populate('category', 'name');
+        const products = await Product.find(filter);
         res.json(products);
     } catch (error) {
         res.status(500).json({ message: error.message });
@@ -34,7 +34,7 @@ const getProducts = async (req, res) => {
 // Get single product
 const getProductById = async (req, res) => {
     try {
-        const product = await Product.findById(req.params.id).populate('category', 'name');
+        const product = await Product.findById(req.params.id);
 
         if (product) {
             res.json(product);

@@ -2,21 +2,37 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { motion } from 'framer-motion';
 import { Link, useSearchParams } from 'react-router-dom';
-import { Filter, Search, ChevronDown, ShoppingCart } from 'lucide-react';
+import { Filter, Search, ChevronDown, Package } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import ProductCard from '../components/ProductCard';
+import { useCart } from '../context/CartContext';
+import { useAuth } from '../context/AuthContext';
 
 export default function Shop() {
     const [products, setProducts] = useState([]);
     const [categories, setCategories] = useState([]);
     const [loading, setLoading] = useState(true);
     const [searchParams, setSearchParams] = useSearchParams();
+    const { fetchCart, cart } = useCart();
+    const { userInfo } = useAuth();
+
+    const searchKeyword = searchParams.get('search') || '';
+    const [searchInput, setSearchInput] = useState(searchKeyword);
 
     const fetchProducts = async () => {
         setLoading(true);
         try {
             const queryStrings = searchParams.toString();
-            // Assuming proxy or running on same port for API
             const { data } = await axios.get(`/api/products?${queryStrings}`);
-            setProducts(data);
+            setProducts(data.products || data);
         } catch (error) {
             console.error("Error fetching products", error);
         } finally {
@@ -46,98 +62,119 @@ export default function Shop() {
         if (catName === 'all') {
             current.delete('category');
         } else {
-            // Need to pass category ID based on the backend rewrite, so we map name to ID
             const cat = categories.find(c => c.name.toLowerCase() === catName.toLowerCase());
             if (cat) current.set('category', cat._id);
+            else current.set('category', catName); // Fallback for string matching
         }
         setSearchParams(current);
     };
 
+    const handleSearchSubmit = (e) => {
+        e.preventDefault();
+        const current = new URLSearchParams(Array.from(searchParams.entries()));
+        if (searchInput) current.set('search', searchInput);
+        else current.delete('search');
+        setSearchParams(current);
+    };
+
+    const handleAddToCart = async (product) => {
+        if (!userInfo) {
+            window.location.href = '/login';
+            return;
+        }
+        try {
+            const config = { headers: { Authorization: `Bearer ${userInfo.token}` } };
+            await axios.post('/api/cart', {
+                productId: product._id,
+                quantity: 1
+            }, config);
+            await fetchCart();
+        } catch (error) {
+            console.error("Failed adding to cart", error);
+        }
+    };
+
     return (
-        <div className="bg-slate-50 min-h-screen pb-24">
+        <div className="bg-background min-h-screen pb-24">
             {/* Shop Header */}
-            <div className="bg-slate-900 text-white py-20 px-4 sm:px-6 lg:px-8 border-b border-slate-800">
-                <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center pt-8 justify-between">
-                    <div>
-                        <h1 className="text-4xl md:text-5xl font-black tracking-tight drop-shadow-sm">The Shop</h1>
-                        <p className="mt-4 text-slate-400 font-medium text-lg max-w-xl">Curated styles and timeless classics built to last.</p>
-                    </div>
+            <div className="bg-card text-card-foreground py-16 px-4 sm:px-6 lg:px-8 border-b border-border">
+                <div className="container mx-auto">
+                    <h1 className="text-4xl md:text-5xl font-bold tracking-tight">The Shop</h1>
+                    <p className="mt-4 text-muted-foreground text-lg max-w-xl">Curated styles and timeless classics built to last.</p>
                 </div>
             </div>
 
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-12 grid grid-cols-1 lg:grid-cols-4 gap-12">
+            <div className="container mx-auto px-4 sm:px-6 lg:px-8 mt-12 grid grid-cols-1 lg:grid-cols-4 gap-8">
+
                 {/* Sidebar Filters */}
-                <div className="space-y-8 lg:col-span-1 border-r border-slate-200 pr-0 lg:pr-8">
-                    <div className="relative">
-                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
-                        <input
+                <div className="space-y-8 lg:col-span-1 border-border lg:pr-8">
+                    <form className="relative" onSubmit={handleSearchSubmit}>
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                        <Input
                             type="text"
                             placeholder="Search products..."
-                            className="w-full bg-white border border-slate-200 rounded-xl py-3 pl-10 pr-4 text-sm font-medium focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all shadow-sm"
-                            onChange={(e) => {
-                                const val = e.target.value;
-                                const current = new URLSearchParams(Array.from(searchParams.entries()));
-                                if (val) current.set('keyword', val);
-                                else current.delete('keyword');
-                                setSearchParams(current);
-                            }}
+                            value={searchInput}
+                            className="pl-9"
+                            onChange={(e) => setSearchInput(e.target.value)}
                         />
-                    </div>
+                    </form>
 
                     <div>
-                        <h3 className="font-bold tracking-wide text-slate-900 mb-4 flex items-center gap-2 uppercase text-sm">
+                        <h3 className="font-semibold text-foreground mb-4 flex items-center gap-2">
                             <Filter className="w-4 h-4" /> Categories
                         </h3>
-                        <ul className="space-y-3 font-medium text-slate-600 cursor-pointer">
-                            <li onClick={() => handleCategoryClick('all')} className={`${!searchParams.get('category') ? 'text-blue-600 font-bold' : 'hover:text-slate-900'}`}>All Products</li>
+                        <div className="flex flex-col gap-2">
+                            <Button
+                                variant={!searchParams.get('category') ? "default" : "ghost"}
+                                className="justify-start"
+                                onClick={() => handleCategoryClick('all')}
+                            >
+                                All Products
+                            </Button>
                             {categories.map((c) => (
-                                <li
+                                <Button
                                     key={c._id}
+                                    variant={searchParams.get('category') === (c._id || c.name) ? "default" : "ghost"}
+                                    className="justify-start capitalize"
                                     onClick={() => handleCategoryClick(c.name)}
-                                    className={`${searchParams.get('category') === c._id ? 'text-blue-600 font-bold' : 'hover:text-slate-900'} capitalize transition-colors`}
                                 >
                                     {c.name}
-                                </li>
+                                </Button>
                             ))}
-                        </ul>
-                    </div>
-
-                    <div>
-                        <h3 className="font-bold tracking-wide text-slate-900 mb-4 flex items-center gap-2 uppercase text-sm">
-                            <Filter className="w-4 h-4" /> Price Range
-                        </h3>
-                        <div className="flex items-center gap-2">
-                            <input type="number" placeholder="Min" className="w-full bg-white border border-slate-200 rounded-lg p-2 text-sm shadow-sm font-medium focus:ring-2 outline-none" />
-                            <span>-</span>
-                            <input type="number" placeholder="Max" className="w-full bg-white border border-slate-200 rounded-lg p-2 text-sm shadow-sm font-medium focus:ring-2 outline-none" />
                         </div>
-                        <button className="mt-4 w-full bg-slate-900 hover:bg-blue-600 text-white font-semibold py-2 rounded-lg transition-colors shadow shadow-slate-900/10">Apply Filters</button>
                     </div>
                 </div>
 
                 {/* Product Grid */}
                 <div className="lg:col-span-3">
                     <div className="flex justify-between items-center mb-8">
-                        <span className="text-slate-500 font-medium">Showing {products.length} results</span>
-                        <div className="relative">
-                            <select className="appearance-none bg-white border border-slate-200 text-slate-700 py-2.5 pl-4 pr-10 rounded-xl font-medium focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-sm transition-all cursor-pointer">
-                                <option>Sort by: Featured</option>
-                                <option>Price: Low to High</option>
-                                <option>Price: High to Low</option>
-                                <option>Newest Arrivals</option>
-                            </select>
-                            <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
-                        </div>
+                        <span className="text-muted-foreground text-sm">Showing {products.length} results</span>
+
+                        <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                                <Button variant="outline" className="gap-2">
+                                    Sort by <ChevronDown className="w-4 h-4" />
+                                </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent>
+                                <DropdownMenuItem>Featured</DropdownMenuItem>
+                                <DropdownMenuItem>Price: Low to High</DropdownMenuItem>
+                                <DropdownMenuItem>Price: High to Low</DropdownMenuItem>
+                                <DropdownMenuItem>Newest Arrivals</DropdownMenuItem>
+                            </DropdownMenuContent>
+                        </DropdownMenu>
                     </div>
 
                     {loading ? (
-                        <div className="flex items-center justify-center h-64">
-                            <div className="w-10 h-10 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin"></div>
+                        <div className="flex items-center justify-center p-24">
+                            <div className="w-10 h-10 border-4 border-primary/30 border-t-primary rounded-full animate-spin"></div>
                         </div>
                     ) : products.length === 0 ? (
-                        <div className="text-center py-24 bg-white rounded-3xl border border-slate-100 shadow-sm">
-                            <p className="text-slate-500 font-medium">No products match your filters.</p>
-                        </div>
+                        <Card className="flex flex-col py-24 items-center justify-center text-center">
+                            <Package className="w-16 h-16 text-muted-foreground opacity-50 mb-4" />
+                            <h3 className="text-xl font-semibold">No products found</h3>
+                            <p className="text-muted-foreground mt-2">Try adjusting your filters or search query.</p>
+                        </Card>
                     ) : (
                         <motion.div
                             initial="hidden"
@@ -146,49 +183,14 @@ export default function Shop() {
                                 hidden: { opacity: 0 },
                                 visible: { opacity: 1, transition: { staggerChildren: 0.1 } }
                             }}
-                            className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-8"
+                            className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6"
                         >
                             {products.map((product) => (
-                                <motion.div
+                                <ProductCard
                                     key={product._id}
-                                    variants={{ hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0 } }}
-                                    className="group bg-white rounded-2xl border border-slate-100 shadow-sm hover:shadow-xl hover:border-blue-100 transition-all duration-300 overflow-hidden flex flex-col"
-                                >
-                                    <Link to={`/product/${product._id}`} className="block relative aspect-square overflow-hidden bg-slate-100">
-                                        <img
-                                            src={product.image || "https://images.unsplash.com/photo-1531306728370-53bf9ce8cb6d?auto=format&fit=crop&q=80"}
-                                            alt={product.name}
-                                            className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
-                                        />
-                                        {product.stock <= 5 && product.stock > 0 && (
-                                            <span className="absolute top-4 left-4 bg-red-100 text-red-700 text-xs font-bold px-3 py-1.5 rounded-full uppercase tracking-wider shadow-sm">
-                                                Only {product.stock} Left!
-                                            </span>
-                                        )}
-                                        {product.stock === 0 && (
-                                            <div className="absolute inset-0 bg-white/60 backdrop-blur-[2px] flex items-center justify-center">
-                                                <span className="bg-slate-900 text-white font-bold px-6 py-2 rounded-full uppercase tracking-widest shadow-xl">Sold Out</span>
-                                            </div>
-                                        )}
-                                    </Link>
-                                    <div className="p-6 flex flex-col flex-grow">
-                                        <div className="mb-4">
-                                            <p className="text-xs font-bold text-slate-400 mb-1 uppercase tracking-wider">{product.category?.name || 'Category'}</p>
-                                            <Link to={`/product/${product._id}`} className="block text-lg font-bold text-slate-900 group-hover:text-blue-600 transition-colors line-clamp-1">
-                                                {product.name}
-                                            </Link>
-                                        </div>
-                                        <div className="mt-auto flex items-center justify-between">
-                                            <span className="text-xl font-black text-slate-900">${product.price.toFixed(2)}</span>
-                                            <button
-                                                disabled={product.stock === 0}
-                                                className={`w-10 h-10 rounded-full flex items-center justify-center transition-all ${product.stock === 0 ? 'bg-slate-100 text-slate-300 cursor-not-allowed' : 'bg-slate-100 text-slate-600 hover:bg-slate-900 hover:text-white shadow-sm'}`}
-                                            >
-                                                <ShoppingCart className="w-5 h-5" />
-                                            </button>
-                                        </div>
-                                    </div>
-                                </motion.div>
+                                    product={product}
+                                    onAddToCart={handleAddToCart}
+                                />
                             ))}
                         </motion.div>
                     )}

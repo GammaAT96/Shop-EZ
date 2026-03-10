@@ -8,7 +8,7 @@ const generateToken = (id) => {
 };
 
 const registerUser = async (req, res) => {
-    const { username, email, password, role } = req.body;
+    const { username, name, email, password, role } = req.body;
 
     try {
         const userExists = await User.findOne({ email });
@@ -18,15 +18,16 @@ const registerUser = async (req, res) => {
         }
 
         const user = await User.create({
-            username,
+            username: username || name,
             email,
             password,
-            role: role || 'user'
+            role: (role || 'user').toLowerCase()
         });
 
         if (user) {
             res.status(201).json({
                 _id: user._id,
+                name: user.username,
                 username: user.username,
                 email: user.email,
                 role: user.role,
@@ -49,6 +50,7 @@ const loginUser = async (req, res) => {
         if (user && (await user.matchPassword(password))) {
             res.json({
                 _id: user._id,
+                name: user.username,
                 username: user.username,
                 email: user.email,
                 role: user.role,
@@ -69,6 +71,7 @@ const getUserProfile = async (req, res) => {
         if (user) {
             res.json({
                 _id: user._id,
+                name: user.username,
                 username: user.username,
                 email: user.email,
                 role: user.role,

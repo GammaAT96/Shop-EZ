@@ -1,64 +1,62 @@
 import React from 'react';
-import { Facebook, Twitter, Instagram, Youtube, Heart } from 'lucide-react';
+import { ShoppingBag, Shield, Truck, RefreshCcw } from 'lucide-react';
+import { Separator } from '@/components/ui/separator';
 
 export default function Footer() {
     return (
-        <footer className="bg-slate-950 text-slate-300 py-16 px-4 sm:px-6 lg:px-8 border-t border-slate-900">
-            <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12">
-
-                <div className="space-y-6">
-                    <span className="font-black text-3xl tracking-tighter text-white drop-shadow-sm">ShopEZ.</span>
-                    <p className="text-slate-400 text-sm leading-relaxed max-w-xs">
-                        The ultimate destination for premium quality products. We focus on curating exactly what you need with an uncompromised experience.
-                    </p>
-                    <div className="flex space-x-4 text-slate-400">
-                        <a href="#" className="hover:text-white hover:-translate-y-1 transition-all"><Facebook className="w-5 h-5" /></a>
-                        <a href="#" className="hover:text-white hover:-translate-y-1 transition-all"><Twitter className="w-5 h-5" /></a>
-                        <a href="#" className="hover:text-white hover:-translate-y-1 transition-all"><Instagram className="w-5 h-5" /></a>
-                        <a href="#" className="hover:text-white hover:-translate-y-1 transition-all"><Youtube className="w-5 h-5" /></a>
+        <footer className="bg-muted/50 border-t border-border mt-20">
+            <div className="container mx-auto px-4 py-12">
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
+                    <div>
+                        <div className="flex items-center gap-2 mb-4">
+                            <div className="w-10 h-10 rounded-full bg-primary flex items-center justify-center">
+                                <ShoppingBag className="w-6 h-6 text-primary-foreground" />
+                            </div>
+                            <span className="text-xl font-bold">shopEZ</span>
+                        </div>
+                        <p className="text-sm text-muted-foreground">
+                            Your one-stop shop for everything you need.
+                        </p>
+                    </div>
+                    <div>
+                        <h3 className="font-semibold mb-4">Shop</h3>
+                        <ul className="space-y-2 text-sm text-muted-foreground">
+                            <li>New Arrivals</li>
+                            <li>Best Sellers</li>
+                            <li>Sale</li>
+                            <li>Categories</li>
+                        </ul>
+                    </div>
+                    <div>
+                        <h3 className="font-semibold mb-4">Support</h3>
+                        <ul className="space-y-2 text-sm text-muted-foreground">
+                            <li>Contact Us</li>
+                            <li>FAQs</li>
+                            <li>Shipping</li>
+                            <li>Returns</li>
+                        </ul>
+                    </div>
+                    <div>
+                        <h3 className="font-semibold mb-4">Company</h3>
+                        <ul className="space-y-2 text-sm text-muted-foreground">
+                            <li>About Us</li>
+                            <li>Careers</li>
+                            <li>Privacy Policy</li>
+                            <li>Terms of Service</li>
+                        </ul>
                     </div>
                 </div>
-
-                <div className="space-y-6">
-                    <h3 className="text-white font-semibold tracking-wide uppercase text-sm">Shop</h3>
-                    <ul className="space-y-3 text-sm font-medium">
-                        <li><a href="#" className="hover:text-white transition-colors">Women's Clothing</a></li>
-                        <li><a href="#" className="hover:text-white transition-colors">Men's Fashion</a></li>
-                        <li><a href="#" className="hover:text-white transition-colors">Electronics & Tech</a></li>
-                        <li><a href="#" className="hover:text-white transition-colors">Home & Living</a></li>
-                        <li><a href="#" className="hover:text-white transition-colors">Beauty & Health</a></li>
-                    </ul>
+                <Separator className="my-8" />
+                <div className="flex flex-col md:flex-row items-center justify-between gap-4">
+                    <p className="text-sm text-muted-foreground">
+                        © 2024 shopEZ. All rights reserved.
+                    </p>
+                    <div className="flex items-center gap-4">
+                        <Shield className="w-5 h-5 text-muted-foreground" />
+                        <Truck className="w-5 h-5 text-muted-foreground" />
+                        <RefreshCcw className="w-5 h-5 text-muted-foreground" />
+                    </div>
                 </div>
-
-                <div className="space-y-6">
-                    <h3 className="text-white font-semibold tracking-wide uppercase text-sm">Company</h3>
-                    <ul className="space-y-3 text-sm font-medium">
-                        <li><a href="#" className="hover:text-white transition-colors">About Us</a></li>
-                        <li><a href="#" className="hover:text-white transition-colors">Careers</a></li>
-                        <li><a href="#" className="hover:text-white transition-colors">Privacy Policy</a></li>
-                        <li><a href="#" className="hover:text-white transition-colors">Terms of Service</a></li>
-                    </ul>
-                </div>
-
-                <div className="space-y-6">
-                    <h3 className="text-white font-semibold tracking-wide uppercase text-sm">Stay in the loop</h3>
-                    <p className="text-slate-400 text-sm">Subscribe to get special offers, free giveaways, and once-in-a-lifetime deals.</p>
-                    <form className="flex space-x-2">
-                        <input
-                            type="email"
-                            placeholder="Enter your email"
-                            className="bg-slate-900 border border-slate-800 text-sm rounded-lg flex-grow px-4 outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 text-white transition-all shadow-inner"
-                        />
-                        <button className="bg-white text-slate-900 px-4 py-2.5 rounded-lg text-sm font-bold shadow hover:bg-slate-200 transition-colors">
-                            Subscribe
-                        </button>
-                    </form>
-                </div>
-            </div>
-
-            <div className="max-w-7xl mx-auto border-t border-slate-800 mt-16 pt-8 flex flex-col md:flex-row justify-between items-center text-sm text-slate-500 font-medium">
-                <p>&copy; {new Date().getFullYear()} ShopEZ Inc. All rights reserved.</p>
-                <p className="flex items-center gap-1 mt-4 md:mt-0">Made with <Heart className="w-4 h-4 text-red-500 fill-red-500" /> by Antigravity</p>
             </div>
         </footer>
     );

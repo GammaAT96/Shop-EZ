@@ -8,11 +8,10 @@ const getDashboardStats = async (req, res) => {
         const totalOrders = await Order.countDocuments();
 
         // Total Revenue
-        const orders = await Order.find();
-        let totalRevenue = 0;
-        orders.forEach(order => {
-            totalRevenue += order.totalAmount;
-        });
+        const revenueResult = await Order.aggregate([
+            { $group: { _id: null, total: { $sum: "$totalAmount" } } }
+        ]);
+        const totalRevenue = revenueResult.length > 0 ? revenueResult[0].total : 0;
 
         // Total Products
         const totalProducts = await Product.countDocuments();

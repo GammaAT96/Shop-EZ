@@ -1,163 +1,197 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { ShoppingBag, Search, Menu, X, User } from 'lucide-react';
+import { ShoppingBag, Search, Menu, X, User, Heart } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '../context/AuthContext';
 import { useCart } from '../context/CartContext';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Badge } from '@/components/ui/badge';
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuLabel,
+    DropdownMenuSeparator,
+    DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 export default function Navbar() {
-    const [scrolled, setScrolled] = useState(false);
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+    const [searchQuery, setSearchQuery] = useState("");
     const navigate = useNavigate();
     const { userInfo, logout } = useAuth();
     const { cart } = useCart();
 
-    useEffect(() => {
-        const handleScroll = () => {
-            if (window.scrollY > 20) {
-                setScrolled(true);
-            } else {
-                setScrolled(false);
-            }
-        };
-
-        window.addEventListener('scroll', handleScroll);
-        return () => window.removeEventListener('scroll', handleScroll);
-    }, []);
+    const handleSearch = (e) => {
+        e.preventDefault();
+        if (searchQuery.trim()) {
+            navigate(`/shop?search=${encodeURIComponent(searchQuery)}`);
+            setMobileMenuOpen(false);
+        }
+    };
 
     const logoutHandler = () => {
         logout();
         navigate('/login');
     };
 
+    const navLinks = [
+        { name: 'Home', path: '/' },
+        { name: 'Categories', path: '/shop' },
+        { name: 'Deals', path: '/shop' }
+    ];
+
     return (
-        <header className={`fixed top-0 w-full z-50 transition-all duration-300 ease-in-out ${scrolled ? 'bg-white/80 backdrop-blur-md shadow-sm border-b border-slate-200' : 'bg-transparent'}`}>
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                <div className="flex justify-between items-center h-20">
-                    <div className="flex items-center">
-                        <Link to="/" className="flex items-center gap-2 group">
-                            <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-blue-600 to-indigo-500 flex items-center justify-center text-white shadow-lg shadow-blue-500/30 group-hover:shadow-blue-500/50 transition-all duration-300">
-                                <ShoppingBag className="w-6 h-6" />
+        <nav className="sticky top-0 z-50 bg-background/95 backdrop-blur-sm border-b border-border">
+            <div className="container mx-auto px-4 py-4">
+                <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-8">
+                        <Link to="/" className="flex items-center gap-2">
+                            <div className="w-10 h-10 rounded-full bg-primary flex items-center justify-center">
+                                <ShoppingBag className="w-6 h-6 text-primary-foreground" />
                             </div>
-                            <span className={`font-black text-2xl tracking-tighter ${scrolled ? 'text-slate-900' : 'text-slate-900 drop-shadow-sm'}`}>ShopEZ.</span>
-                        </Link>
-                    </div>
-
-                    <nav className="hidden md:flex space-x-8">
-                        {['Home', 'Shop', 'Categories', 'About'].map((item, index) => (
-                            <Link
-                                key={index}
-                                to={item === 'Home' ? '/' : `/${item.toLowerCase()}`}
-                                className={`text-sm font-semibold tracking-wide transition-colors hover:text-blue-600 ${scrolled ? 'text-slate-600' : 'text-slate-800'}`}
-                            >
-                                {item}
-                            </Link>
-                        ))}
-                    </nav>
-
-                    <div className="hidden md:flex items-center space-x-6">
-                        <button className="text-slate-500 hover:text-blue-600 transition-colors">
-                            <Search className="w-5 h-5" />
-                        </button>
-                        <Link to="/cart" className="relative text-slate-500 hover:text-blue-600 transition-colors">
-                            <ShoppingBag className="w-5 h-5" />
-                            <span className="absolute -top-2 -right-2 bg-pink-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full">
-                                {cart?.products?.length || 0}
-                            </span>
+                            <span className="text-2xl font-bold text-foreground">shopEZ</span>
                         </Link>
 
-                        {userInfo ? (
-                            <div className="relative group cursor-pointer inline-flex items-center space-x-2">
-                                <div className="w-9 h-9 bg-slate-100 rounded-full flex items-center justify-center text-slate-600 border border-slate-200">
-                                    <User className="w-5 h-5" />
-                                </div>
-                                <div className="absolute right-0 top-full mt-2 w-48 bg-white rounded-xl shadow-xl shadow-slate-200/50 border border-slate-100 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 transform translate-y-2 group-hover:translate-y-0">
-                                    <div className="p-4 border-b border-slate-100">
-                                        <p className="text-sm font-semibold text-slate-800 truncate">{userInfo.username}</p>
-                                        <p className="text-xs text-slate-500 truncate">{userInfo.email}</p>
-                                    </div>
-                                    <div className="p-2">
-                                        {userInfo.role === 'admin' && (
-                                            <Link to="/admin/dashboard" className="block px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 hover:text-blue-600 rounded-lg transition-colors">
-                                                Dashboard
-                                            </Link>
-                                        )}
-                                        <Link to="/profile" className="block px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 hover:text-blue-600 rounded-lg transition-colors">
-                                            My Profile
-                                        </Link>
-                                    </div>
-                                    <div className="p-2 border-t border-slate-100">
-                                        <button onClick={logoutHandler} className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 rounded-lg transition-colors">
-                                            Sign out
-                                        </button>
-                                    </div>
-                                </div>
-                            </div>
-                        ) : (
-                            <Link to="/login" className="px-5 py-2.5 text-sm font-semibold text-white bg-slate-900 rounded-full hover:bg-blue-600 transition-all duration-300 shadow-md hover:shadow-lg shadow-slate-900/20 hover:shadow-blue-600/30 transform hover:-translate-y-0.5">
-                                Sign In
-                            </Link>
-                        )}
-                    </div>
-
-                    <div className="md:hidden flex items-center space-x-4">
-                        <Link to="/cart" className="relative text-slate-500">
-                            <ShoppingBag className="w-6 h-6" />
-                        </Link>
-                        <button onClick={() => setMobileMenuOpen(!mobileMenuOpen)} className="text-slate-800 p-2">
-                            {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
-                        </button>
-                    </div>
-                </div>
-            </div>
-
-            <AnimatePresence>
-                {mobileMenuOpen && (
-                    <motion.div
-                        initial={{ opacity: 0, height: 0 }}
-                        animate={{ opacity: 1, height: 'auto' }}
-                        exit={{ opacity: 0, height: 0 }}
-                        className="md:hidden bg-white/95 backdrop-blur-xl border-b border-slate-200 overflow-hidden shadow-2xl"
-                    >
-                        <div className="px-4 pt-4 pb-6 space-y-2">
-                            {['Home', 'Shop', 'Categories', 'About'].map((item, index) => (
-                                <Link
-                                    key={index}
-                                    to={item === 'Home' ? '/' : `/${item.toLowerCase()}`}
-                                    onClick={() => setMobileMenuOpen(false)}
-                                    className="block px-4 py-3 text-base font-medium text-slate-800 hover:bg-slate-50 rounded-xl"
-                                >
-                                    {item}
+                        <div className="hidden md:flex items-center gap-6">
+                            {navLinks.map((link) => (
+                                <Link key={link.name} to={link.path}>
+                                    <Button variant="ghost">{link.name}</Button>
                                 </Link>
                             ))}
-                            <div className="pt-4 border-t border-slate-100">
-                                {userInfo ? (
-                                    <>
-                                        <div className="px-4 py-2 mb-2">
-                                            <p className="text-sm font-semibold text-slate-800">{userInfo.username}</p>
+                        </div>
+                    </div>
+
+                    <form onSubmit={handleSearch} className="hidden md:flex items-center gap-4 flex-1 max-w-md mx-8">
+                        <div className="relative flex-1">
+                            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                            <Input
+                                type="text"
+                                placeholder="Search products..."
+                                value={searchQuery}
+                                onChange={(e) => setSearchQuery(e.target.value)}
+                                className="pl-10 bg-background"
+                            />
+                        </div>
+                    </form>
+
+                    <div className="flex items-center gap-4">
+                        <Button variant="ghost" size="icon" className="hidden md:flex">
+                            <Heart className="w-5 h-5" />
+                        </Button>
+
+                        {userInfo ? (
+                            <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                    <Button variant="ghost" size="icon">
+                                        <User className="w-5 h-5" />
+                                    </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align="end" className="w-56">
+                                    <DropdownMenuLabel>
+                                        <div className="flex flex-col space-y-1">
+                                            <p className="text-sm font-medium leading-none">{userInfo.username}</p>
+                                            <p className="text-xs leading-none text-muted-foreground">{userInfo.email}</p>
                                         </div>
-                                        {userInfo.role === 'admin' && (
-                                            <Link to="/admin/dashboard" onClick={() => setMobileMenuOpen(false)} className="block px-4 py-3 text-base font-medium text-slate-800 hover:bg-slate-50 rounded-xl">Dashboard</Link>
-                                        )}
-                                        <button onClick={() => { logoutHandler(); setMobileMenuOpen(false); }} className="w-full text-left px-4 py-3 text-base font-medium text-red-600 hover:bg-red-50 rounded-xl">
-                                            Sign out
-                                        </button>
-                                    </>
-                                ) : (
-                                    <div className="px-4 space-y-3">
-                                        <Link to="/login" onClick={() => setMobileMenuOpen(false)} className="block w-full text-center px-5 py-3 text-base font-semibold text-white bg-slate-900 rounded-xl">
-                                            Sign In
-                                        </Link>
-                                        <Link to="/register" onClick={() => setMobileMenuOpen(false)} className="block w-full text-center px-5 py-3 text-base font-semibold text-slate-900 bg-slate-100 rounded-xl">
-                                            Create Account
-                                        </Link>
-                                    </div>
+                                    </DropdownMenuLabel>
+                                    <DropdownMenuSeparator />
+                                    {userInfo.role === 'admin' && (
+                                        <DropdownMenuItem asChild>
+                                            <Link to="/admin/dashboard" className="w-full cursor-pointer">Admin Panel</Link>
+                                        </DropdownMenuItem>
+                                    )}
+                                    <DropdownMenuItem asChild>
+                                        <Link to="/profile" className="w-full cursor-pointer">My Profile</Link>
+                                    </DropdownMenuItem>
+                                    <DropdownMenuSeparator />
+                                    <DropdownMenuItem onClick={logoutHandler} className="text-red-600 focus:text-red-500 cursor-pointer">
+                                        Sign out
+                                    </DropdownMenuItem>
+                                </DropdownMenuContent>
+                            </DropdownMenu>
+                        ) : (
+                            <Link to="/login" className="hidden md:block">
+                                <Button variant="default">Sign In</Button>
+                            </Link>
+                        )}
+
+                        <Link to="/cart">
+                            <Button variant="ghost" size="icon" className="relative">
+                                <ShoppingCartIcon className="w-5 h-5" />
+                                {cart?.products?.length > 0 && (
+                                    <Badge className="absolute -top-1 -right-1 w-5 h-5 flex items-center justify-center p-0 text-xs">
+                                        {cart.products.length}
+                                    </Badge>
+                                )}
+                            </Button>
+                        </Link>
+
+                        <Button
+                            variant="ghost"
+                            size="icon"
+                            className="md:hidden"
+                            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+                        >
+                            {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+                        </Button>
+                    </div>
+                </div>
+
+                <AnimatePresence>
+                    {mobileMenuOpen && (
+                        <motion.div
+                            initial={{ height: 0, opacity: 0 }}
+                            animate={{ height: "auto", opacity: 1 }}
+                            exit={{ height: 0, opacity: 0 }}
+                            className="md:hidden mt-4 space-y-4 overflow-hidden"
+                        >
+                            <form onSubmit={handleSearch}>
+                                <Input
+                                    type="text"
+                                    placeholder="Search products..."
+                                    value={searchQuery}
+                                    onChange={(e) => setSearchQuery(e.target.value)}
+                                    className="w-full"
+                                />
+                            </form>
+                            <div className="flex flex-col gap-2">
+                                {navLinks.map((link) => (
+                                    <Link key={link.name} to={link.path} onClick={() => setMobileMenuOpen(false)}>
+                                        <Button variant="ghost" className="justify-start w-full">{link.name}</Button>
+                                    </Link>
+                                ))}
+                                {!userInfo && (
+                                    <Link to="/login" onClick={() => setMobileMenuOpen(false)}>
+                                        <Button variant="default" className="justify-start w-full">Sign In</Button>
+                                    </Link>
                                 )}
                             </div>
-                        </div>
-                    </motion.div>
-                )}
-            </AnimatePresence>
-        </header>
+                        </motion.div>
+                    )}
+                </AnimatePresence>
+            </div>
+        </nav>
+    );
+}
+
+function ShoppingCartIcon(props) {
+    return (
+        <svg
+            {...props}
+            xmlns="http://www.w3.org/2000/svg"
+            width="24"
+            height="24"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+        >
+            <circle cx="8" cy="21" r="1" />
+            <circle cx="19" cy="21" r="1" />
+            <path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12" />
+        </svg>
     );
 }
