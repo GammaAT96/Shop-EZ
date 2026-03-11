@@ -1,68 +1,35 @@
-# ShopEZ Backend API
+# shopEZ Backend
 
-This is the backend API for the ShopEZ E-Commerce application. It is built using Node.js, Express.js, and MongoDB.
+Node.js + Express API with Prisma and MongoDB.
 
-## Features Let
+## Database setup (Prisma + MongoDB)
 
-- User authentication (JWT)
-- Role-based access control (User and Admin)
-- Product listing, searching, and management
-- Shopping cart functionality
-- Order processing and management
+1. **MongoDB**
+   - Create a cluster at [MongoDB Atlas](https://www.mongodb.com/cloud/atlas) or use a local MongoDB instance.
+   - Copy the connection string.
 
-## Environment Variables
+2. **Environment**
+   - Copy `.env.example` to `.env`.
+   - Set `DATABASE_URL` to your MongoDB connection string (e.g. `mongodb+srv://user:pass@cluster.mongodb.net/shopez?retryWrites=true&w=majority`).
+   - Set `JWT_SECRET` to a secure random string.
 
-Make sure to create a `.env` file in the root directory and add the following:
+3. **Prisma**
+   ```bash
+   cd backend
+   npm install
+   npx prisma generate
+   ```
+   - `prisma generate` creates the Prisma Client from `prisma/schema.prisma`. No migration step for MongoDB; Prisma creates collections when you first write data.
 
-```
-PORT=5000
-MONGO_URI=your_mongodb_connection_string
-JWT_SECRET=your_jwt_secret
-NODE_ENV=development
-```
+4. **Run**
+   ```bash
+   npm run dev
+   ```
 
-## Running the Application
+## Collections (MongoDB)
 
-1. Install dependencies
-```bash
-npm install
-```
-
-2. Run the server locally (with nodemon)
-```bash
-npm run dev
-```
-
-3. Run in production
-```bash
-npm start
-```
-
-## API Endpoints
-
-### Auth
-- `POST /auth/register` - Register a new user
-- `POST /auth/login` - Login user
-- `GET /auth/profile` - Get logged-in user profile (Requires token)
-
-### Products
-- `GET /products` - Get all products (supports `?keyword=` for search)
-- `GET /products/:id` - Get a single product
-- `POST /products` - Create product (Admin only)
-- `PUT /products/:id` - Update a product (Admin only)
-- `DELETE /products/:id` - Delete a product (Admin only)
-
-### Cart
-- `GET /cart` - View cart (Requires token)
-- `POST /cart/add` - Add items to cart (Requires token)
-- `DELETE /cart/remove/:id` - Remove an item from cart (Requires token)
-
-### Orders
-- `POST /orders` - Place an order (Requires token)
-- `GET /orders/myorders` - Get current user's orders (Requires token)
-- `GET /orders` - Get all orders (Admin only)
-- `GET /orders/:id` - Get specific order by id (Requires token)
-- `PATCH /orders/:id/status` - Update order status (Admin only)
-
-## License
-ISC
+- **User** – auth (username, email, password, usertype)
+- **Admin** – banner URL, categories array
+- **Product** – title, description, images, sizes, category, gender, price, discount
+- **Cart** – user cart items
+- **Orders** – placed orders with shipping and status

@@ -1,133 +1,115 @@
-const Order = require('../models/Order');
-const Product = require('../models/Product');
-const nodemailer = require('nodemailer');
+const { prisma } = require('../config/db');
 
-const sendOrderEmail = async (email, order) => {
-    try {
-        const transporter = nodemailer.createTransport({
-            host: process.env.EMAIL_HOST || 'smtp.ethereal.email',
-            port: process.env.EMAIL_PORT || 587,
-            auth: {
-                user: process.env.EMAIL_USER || 'test@ethereal.email',
-                pass: process.env.EMAIL_PASS || 'password'
-            }
-        });
+const ALLOWED_PAYMENT_METHODS = ['cod', 'card', 'upi', 'netbanking'];
 
-        await transporter.sendMail({
-            from: '"ShopEZ" <no-reply@shopez.com>',
-            to: email,
-            subject: 'Order Confirmation - ShopEZ',
-            text: `Thank you for your order! Your order ID is ${order._id}. Total amount: $${order.totalAmount}.`
-        });
-    } catch (err) {
-        console.error("Failed to send order email", err);
+const create = async (req, res) => {
+  try {
+    const { name, email, mobile, address, pincode, paymentMethod, items } = req.body;
+    const userId = req.user.id;
+    if (!name || !email || !mobile || !address || !pincode || !paymentMethod || !items?.length) {
+      return res.status(400).json({ message: 'Required: name, email, mobile, address, pincode, paymentMethod, items array.' });
     }
+    if (!ALLOWED_PAYMENT_METHODS.includes(String(paymentMethod).toLowerCase())) {
+      return res.status(400).json({ message: `paymentMethod must be one of: ${ALLOWED_PAYMENT_METHODS.join(', ')}` });
+    }
+    const orderDate = new Date().toISOString();
+    const orders = await Promise.all(
+      items.map((it) =>
+        prisma.order.create({
+          data: {
+            userId,
+            name,
+            email,
+            mobile,
+            address,
+            pincode,
+            title: it.title,
+            description: it.description || '',
+            mainImg: it.mainImg || '',
+            size: it.size,
+            quantity: Number(it.quantity) || 1,
+            price: Number(it.price),
+            discount: Number(it.discount) || 0,
+            paymentMethod: String(paymentMethod).toLowerCase(),
+            orderDate,
+            orderStatus: 'order placed',
+          },
+        })
+      )
+    );
+    res.status(201).json(orders);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
 };
 
-// Create new order
-const addOrderItems = async (req, res) => {
-    try {
-        const { orderItems, totalAmount, shippingDetails, paymentMethod } = req.body;
-
-        if (orderItems && orderItems.length === 0) {
-            return res.status(400).json({ message: 'No order items' });
-        } else {
-            // Check stock first
-            for (const item of orderItems) {
-                const product = await Product.findById(item.productId);
-                if (product) {
-                    if (product.stock < item.quantity) {
-                        return res.status(400).json({ message: `Insufficient stock for product ID: ${item.productId}` });
-                    }
-                } else {
-                    return res.status(404).json({ message: `Product not found: ${item.productId}` });
-                }
-            }
-
-            // Decrement Stock
-            for (const item of orderItems) {
-                const product = await Product.findById(item.productId);
-                product.stock -= item.quantity;
-                await product.save();
-            }
-
-            const order = new Order({
-                userId: req.user._id,
-                products: orderItems.map((item) => ({
-                    productId: item.productId,
-                    quantity: item.quantity,
-                    price: item.price,
-                    size: item.size
-                })),
-                shippingDetails,
-                paymentMethod,
-                totalAmount
-            });
-
-            const createdOrder = await order.save();
-
-            if (req.user && req.user.email) {
-                sendOrderEmail(req.user.email, createdOrder);
-            }
-
-            res.status(201).json(createdOrder);
-        }
-    } catch (error) {
-        res.status(500).json({ message: error.message });
-    }
+const getMine = async (req, res) => {
+  try {
+    const orders = await prisma.order.findMany({
+      where: { userId: req.user.id },
+      orderBy: { createdAt: 'desc' },
+    });
+    res.json(orders);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
 };
 
-// Get order by ID
-const getOrderById = async (req, res) => {
-    try {
-        const order = await Order.findById(req.params.id).populate('userId', 'name email').populate('products.productId', 'name image');
-
-        if (order) {
-            res.json(order);
-        } else {
-            res.status(404).json({ message: 'Order not found' });
-        }
-    } catch (error) {
-        res.status(500).json({ message: error.message });
-    }
+const getById = async (req, res) => {
+  try {
+    const order = await prisma.order.findUnique({ where: { id: req.params.id } });
+    if (!order) return res.status(404).json({ message: 'Order not found.' });
+    const isOwner = order.userId === req.user.id;
+    const isAdmin = req.user.usertype === 'admin';
+    if (!isOwner && !isAdmin) return res.status(403).json({ message: 'Not allowed.' });
+    res.json(order);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
 };
 
-// Get logged in user orders
-const getMyOrders = async (req, res) => {
-    try {
-        const orders = await Order.find({ userId: req.user._id });
-        res.json(orders);
-    } catch (error) {
-        res.status(500).json({ message: error.message });
+const cancelMine = async (req, res) => {
+  try {
+    const order = await prisma.order.findUnique({ where: { id: req.params.id } });
+    if (!order) return res.status(404).json({ message: 'Order not found.' });
+    if (order.userId !== req.user.id) return res.status(403).json({ message: 'Not allowed.' });
+    if (['delivered', 'cancelled'].includes(order.orderStatus)) {
+      return res.status(400).json({ message: `Cannot cancel an order with status: ${order.orderStatus}` });
     }
+    const updated = await prisma.order.update({ where: { id: req.params.id }, data: { orderStatus: 'cancelled' } });
+    res.json(updated);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
 };
 
-// Get all orders (ADMIN)
-const getOrders = async (req, res) => {
-    try {
-        const orders = await Order.find({}).populate('userId', 'id name');
-        res.json(orders);
-    } catch (error) {
-        res.status(500).json({ message: error.message });
-    }
+const getAll = async (req, res) => {
+  try {
+    const orders = await prisma.order.findMany({
+      orderBy: { createdAt: 'desc' },
+    });
+    res.json(orders);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
 };
 
-// Update order status (ADMIN)
-const updateOrderStatus = async (req, res) => {
-    try {
-        const order = await Order.findById(req.params.id);
-
-        if (order) {
-            order.orderStatus = req.body.orderStatus || order.orderStatus;
-            order.paymentStatus = req.body.paymentStatus || order.paymentStatus;
-            const updatedOrder = await order.save();
-            res.json(updatedOrder);
-        } else {
-            res.status(404).json({ message: 'Order not found' });
-        }
-    } catch (error) {
-        res.status(500).json({ message: error.message });
+const updateStatus = async (req, res) => {
+  try {
+    const { status } = req.body;
+    const allowed = ['order placed', 'in-transit', 'delivered', 'cancelled'];
+    if (!status || !allowed.includes(status)) {
+      return res.status(400).json({ message: 'Valid status: order placed, in-transit, delivered, cancelled.' });
     }
+    const order = await prisma.order.update({
+      where: { id: req.params.id },
+      data: { orderStatus: status },
+    });
+    res.json(order);
+  } catch (err) {
+    if (err.code === 'P2025') return res.status(404).json({ message: 'Order not found.' });
+    res.status(500).json({ message: err.message });
+  }
 };
 
-module.exports = { addOrderItems, getOrderById, getMyOrders, getOrders, updateOrderStatus };
+module.exports = { create, getMine, getById, cancelMine, getAll, updateStatus, ALLOWED_PAYMENT_METHODS };

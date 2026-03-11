@@ -1,37 +1,32 @@
 const jwt = require('jsonwebtoken');
-const User = require('../models/User');
+const { prisma } = require('../config/db');
 
-const protect = async (req, res, next) => {
-    let token;
+const JWT_SECRET = process.env.JWT_SECRET || 'fallback-secret-change-me';
 
-    if (req.headers.authorization && req.headers.authorization.startsWith('Bearer')) {
-        try {
-            token = req.headers.authorization.split(' ')[1];
-            const decoded = jwt.verify(token, process.env.JWT_SECRET);
-            req.user = await User.findById(decoded.id).select('-password');
-
-            if (!req.user) {
-                return res.status(401).json({ message: 'User not found' });
-            }
-
-            next();
-        } catch (error) {
-            console.error(error);
-            return res.status(401).json({ message: 'Not authorized, token failed' });
-        }
-    }
-
+const verifyToken = async (req, res, next) => {
+  try {
+    const authHeader = req.headers.authorization;
+    const token = authHeader?.startsWith('Bearer ') ? authHeader.slice(7) : null;
     if (!token) {
-        return res.status(401).json({ message: 'Not authorized, no token' });
+      return res.status(401).json({ message: 'Access denied. No token provided.' });
     }
+    const decoded = jwt.verify(token, JWT_SECRET);
+    const user = await prisma.user.findUnique({ where: { id: decoded.userId } });
+    if (!user) return res.status(401).json({ message: 'User not found.' });
+    req.user = user;
+    next();
+  } catch (err) {
+    if (err.name === 'JsonWebTokenError') return res.status(401).json({ message: 'Invalid token.' });
+    if (err.name === 'TokenExpiredError') return res.status(401).json({ message: 'Token expired.' });
+    res.status(500).json({ message: err.message });
+  }
 };
 
-const admin = (req, res, next) => {
-    if (req.user && req.user.role === 'admin') {
-        next();
-    } else {
-        return res.status(403).json({ message: 'Not authorized as an admin' });
-    }
+const requireAdmin = (req, res, next) => {
+  if (req.user?.usertype !== 'admin') {
+    return res.status(403).json({ message: 'Admin access required.' });
+  }
+  next();
 };
 
-module.exports = { protect, admin };
+module.exports = { verifyToken, requireAdmin, JWT_SECRET };
